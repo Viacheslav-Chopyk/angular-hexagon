@@ -16,7 +16,7 @@ import {catchError, throwError} from 'rxjs';
 export class AppComponent implements OnInit {
   private map!: L.Map;
   private currentHexLayer: L.LayerGroup | undefined;
-  title: string = 'angular-test';
+  title: string = 'angular-hexagon';
   polygonsData: Array<{ id: number, COLOR_HEX: string }> = [];
 
   constructor(
@@ -48,7 +48,7 @@ export class AppComponent implements OnInit {
   }
 
   private initMap(): void {
-    this.map = L.map('map').setView([48.9225, 24.7110], 12);
+    this.map = L.map('map').setView([48.9225, 24.7110], 16);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -67,10 +67,10 @@ export class AppComponent implements OnInit {
     if (zoom >= 16) return 11;
     if (zoom >= 14) return 10;
     if (zoom >= 12) return 9;
-    if (zoom >= 10) return 8;
-    if (zoom >= 7) return 5;
-    if (zoom >= 5) return 4;
-    return 3;
+    if (zoom >= 10) return 7;
+    if (zoom >= 7) return 6;
+    if (zoom >= 5) return 5;
+    return 4;
   }
 
   private drawHexagons(): void {
