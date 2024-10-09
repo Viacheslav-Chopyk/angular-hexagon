@@ -1,16 +1,16 @@
 import {Component, OnInit} from '@angular/core';
 import {RouterOutlet} from '@angular/router';
 import L from 'leaflet';
-import geojson2h3 from 'geojson2h3';
+import { HttpClient } from '@angular/common/http';
+import { catchError, throwError } from 'rxjs';
+import { HexagonService } from './hexagon.service';
 import {Feature} from 'geojson';
-import {HttpClient} from '@angular/common/http';
-import {catchError, throwError} from 'rxjs';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet],
-  templateUrl: './app.component.html',
+  template: `<div id="map"></div>`,
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
@@ -20,9 +20,9 @@ export class AppComponent implements OnInit {
   polygonsData: Array<{ id: number, COLOR_HEX: string }> = [];
 
   constructor(
-    private http: HttpClient
-  ) {
-  }
+    private http: HttpClient,
+    private hexagonService: HexagonService
+  ) {}
 
   ngOnInit() {
     this.initMap();
@@ -39,7 +39,7 @@ export class AppComponent implements OnInit {
     ).subscribe(res => {
       this.polygonsData = res;
       this.drawHexagons();
-    })
+    });
   }
 
   private getColorForPolygon(id: number): string {
@@ -49,7 +49,6 @@ export class AppComponent implements OnInit {
 
   private initMap(): void {
     this.map = L.map('map').setView([48.9225, 24.7110], 16);
-
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
     }).addTo(this.map);
@@ -62,20 +61,11 @@ export class AppComponent implements OnInit {
     this.drawHexagons();
   }
 
-  private getResolutionFromZoom(zoom: number): number {
-    if (zoom >= 18) return 12;
-    if (zoom >= 16) return 11;
-    if (zoom >= 14) return 10;
-    if (zoom >= 12) return 9;
-    if (zoom >= 10) return 7;
-    if (zoom >= 7) return 6;
-    if (zoom >= 5) return 5;
-    return 4;
-  }
-
   private drawHexagons(): void {
     const zoomLevel = this.map.getZoom();
-    const resolution = this.getResolutionFromZoom(zoomLevel);
+    const resolution = this.hexagonService.getResolutionFromZoom(zoomLevel);
+    const bounds = this.map.getBounds();
+
     const polygons: Array<{ polygon: Feature, color: string }> = [
       {
         polygon: {
@@ -135,11 +125,12 @@ export class AppComponent implements OnInit {
 
     const hexLayer = L.layerGroup();
     try {
-      polygons.forEach(({polygon, color}) => {
-        const hexagons = geojson2h3.featureToH3Set(polygon, resolution, {ensureOutput: true});
+      polygons.forEach(({ polygon, color }) => {
+        const hexagons = this.hexagonService.getHexagons(polygon, resolution);
+        const filteredHexagons = this.hexagonService.filterHexagons(hexagons, bounds);
 
-        if (hexagons.length > 0) {
-          const multiPolygonFeature = geojson2h3.h3SetToMultiPolygonFeature(hexagons);
+        if (filteredHexagons.length > 0) {
+          const multiPolygonFeature = this.hexagonService.convertToMultiPolygonFeature(filteredHexagons);
 
           L.geoJSON(multiPolygonFeature, {
             style: {

@@ -20,7 +20,7 @@
     "@angular/router": "^18.2.0",
     "@asymmetrik/ngx-leaflet": "^18.0.1",
     "geojson2h3": "^1.2.0",
-    "h3-js": "^3.7.0",
+    "h3-js": "^3.7.2",
     "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
